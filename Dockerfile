@@ -13,11 +13,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     # PostgreSQL客户端工具 (支持PostgreSQL 17.5及以下版本)
     postgresql-client \
-    # 用于构建psycopg2的依赖
-    gcc \
-    g++ \
-    libpq-dev \
-    python3-dev \
     pgloader \
     && rm -rf /var/lib/apt/lists/*
 
