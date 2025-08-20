@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite到PostgreSQL迁移工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            font-size: 0.95rem;
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            margin: 0 auto;
+            max-width: 1000px;
+        }
+        .header-title {
+            color: #495057;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .header-title:after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 0.75rem auto 0;
+            border-radius: 2px;
+        }
+        .card {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        .card-header {
+            background: linear-gradient(120deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px 10px 0 0 !important;
+            padding: 0.8rem 1.25rem;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .btn-toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0.3rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .btn-toggle-password:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .password-container {
+            position: relative;
+        }
+        .section-title {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        .feature-icon {
+            font-size: 1.3rem;
+            margin-right: 10px;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 6px;
+        }
+        .result-alert {
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.35rem;
+            color: #495057;
+        }
+        .form-control, .form-select {
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        .btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8, #6a4190);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #218838, #1ba87e);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            border: none;
+        }
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e0a800, #e07000);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #6f42c1);
+            border: none;
+        }
+        .btn-info:hover {
+            background: linear-gradient(135deg, #138496, #5a32a3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.25);
+        }
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+        }
+        .nav-tabs .nav-link {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: -2px;
+        }
+        .nav-tabs .nav-link.active {
+            color: #495057;
+            background: linear-gradient(120deg, #f8f9fa, #e9ecef);
+            border: none;
+            position: relative;
+        }
+        .nav-tabs .nav-link.active:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .container {
+            max-width: 1000px;
+            padding: 0 1rem;
+        }
+        .row {
+            margin-left: -0.625rem;
+            margin-right: -0.625rem;
+        }
+        .col-md-6, .col-md-12 {
+            padding-left: 0.625rem;
+            padding-right: 0.625rem;
+        }
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+        .mt-3 {
+            margin-top: 1rem !important;
+        }
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+        .mt-4 {
+            margin-top: 1.5rem !important;
+        }
+        .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-input-label {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-input-label:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .file-name {
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .progress-container {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .test-result {
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .test-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        .test-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem 0;
+            }
+            .main-container {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+            }
+            .section-title {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-title">
+            <h1>SQLite到PostgreSQL迁移工具</h1>
+            <p class="text-muted mb-0">轻松迁移您的数据库并管理备份</p>
+        </div>
+        
+        <!-- 数据库配置表单 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="section-title">
+                    <i class="bi bi-database-gear feature-icon"></i>PostgreSQL数据库配置
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="dbConfigForm">
+                    <div class="row">
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="pg_host" class="form-label">主机地址</label>
+                            <input type="text" class="form-control" id="pg_host" value="localhost" required>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="pg_port" class="form-label">端口</label>
+                            <input type="text" class="form-control" id="pg_port" value="5432" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="pg_database" class="form-label">数据库名</label>
+                            <input type="text" class="form-control" id="pg_database" value="moviepilot" required>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="pg_user" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="pg_user" value="moviepilot" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="pg_password" class="form-label">密码</label>
+                            <div class="password-container">
+                                <input type="password" class="form-control" id="pg_password" value="moviepilot" required>
+                                <button type="button" class="btn-toggle-password" id="togglePassword" title="显示/隐藏密码">
+                                    <i class="bi bi-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-info" onclick="testPostgreSQLConnection()">
+                                    <i class="bi bi-plug me-1"></i>测试
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="saveConfig()">
+                                    <i class="bi bi-save me-1"></i>保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pgTestResult"></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <!-- 迁移功能 -->
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="section-title">
+                            <i class="bi bi-arrow-left-right feature-icon"></i>数据库迁移
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-3" id="migrationTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
+                                    <i class="bi bi-upload me-1"></i>上传文件
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="server-tab" data-bs-toggle="tab" data-bs-target="#server" type="button" role="tab">
+                                    <i class="bi bi-server me-1"></i>服务器文件
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="migrationTabContent">
+                            <div class="tab-pane fade show active" id="upload" role="tabpanel">
+                                <form id="migrationForm" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="sqlite_file" class="form-label">选择SQLite文件</label>
+                                        <div class="file-input-wrapper">
+                                            <div class="file-input-label">
+                                                <i class="bi bi-folder me-2"></i>选择文件
+                                            </div>
+                                            <input class="form-control" type="file" id="sqlite_file" accept=".db,.sqlite,.sqlite3" required>
+                                        </div>
+                                        <div class="file-name" id="sqlite_file_name">未选择文件</div>
+                                        <button type="button" class="btn btn-info btn-sm mt-2" onclick="validateSQLiteFile()">
+                                            <i class="bi bi-check-circle me-1"></i>验证文件
+                                        </button>
+                                    </div>
+                                    <div id="sqliteValidationResult"></div>
+                                    <button type="button" class="btn btn-primary w-100" onclick="migrateDatabase()">
+                                        <i class="bi bi-arrow-right-circle me-2"></i>迁移数据库
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="server" role="tabpanel">
+                                <form id="serverMigrationForm">
+                                    <div class="mb-3">
+                                        <label for="server_sqlite_file" class="form-label">服务器上的SQLite文件路径</label>
+                                        <input type="text" class="form-control" id="server_sqlite_file" placeholder="/path/to/your/database.db" required>
+                                        <div class="form-text">请输入服务器上SQLite文件的完整路径</div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" onclick="migrateServerDatabase()">
+                                        <i class="bi bi-arrow-right-circle me-2"></i>迁移数据库
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div id="migrationResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="row h-100">
+                    <div class="col-md-12 mb-4">
+                        <!-- 备份功能 -->
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="section-title">
+                                    <i class="bi bi-download feature-icon"></i>数据库备份
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">创建PostgreSQL数据库的备份文件</p>
+                                <button type="button" class="btn btn-success w-100" onclick="backupDatabase()">
+                                    <i class="bi bi-cloud-download me-2"></i>备份数据库
+                                </button>
+                                <div id="backupResult" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <!-- 恢复功能 -->
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="section-title">
+                                    <i class="bi bi-upload feature-icon"></i>数据库恢复
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="restoreForm" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="backup_file" class="form-label">选择备份文件</label>
+                                        <div class="file-input-wrapper">
+                                            <div class="file-input-label">
+                                                <i class="bi bi-folder me-2"></i>选择文件
+                                            </div>
+                                            <input class="form-control" type="file" id="backup_file" accept=".sql" required>
+                                        </div>
+                                        <div class="file-name" id="backup_file_name">未选择文件</div>
+                                    </div>
+                                    <button type="button" class="btn btn-warning w-100" onclick="restoreDatabase()">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>恢复数据库
+                                    </button>
+                                </form>
+                                <div id="restoreResult" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载时获取保存的配置
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSavedConfig();
+        });
+
+        // 文件选择显示文件名
+        document.getElementById('sqlite_file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '未选择文件';
+            document.getElementById('sqlite_file_name').textContent = fileName;
+            // 清除之前的验证结果
+            document.getElementById('sqliteValidationResult').innerHTML = '';
+        });
+        
+        document.getElementById('backup_file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '未选择文件';
+            document.getElementById('backup_file_name').textContent = fileName;
+        });
+        
+        // 密码显示/隐藏切换
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('pg_password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('bi-eye');
+                eyeIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('bi-eye-slash');
+                eyeIcon.classList.add('bi-eye');
+            }
+        });
+
+        // 保存配置
+        function saveConfig() {
+            const formData = new FormData();
+            const dbConfig = getDBConfig();
+            
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            fetch('/save-config', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('pgTestResult', 'success', '配置已保存');
+                } else {
+                    showAlert('pgTestResult', 'danger', '保存失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showAlert('pgTestResult', 'danger', '保存失败: ' + error);
+            });
+        }
+
+        // 加载保存的配置
+        function loadSavedConfig() {
+            fetch('/config')
+            .then(response => response.json())
+            .then(config => {
+                document.getElementById('pg_host').value = config.pg_host || 'localhost';
+                document.getElementById('pg_port').value = config.pg_port || '5432';
+                document.getElementById('pg_database').value = config.pg_database || 'moviepilot';
+                document.getElementById('pg_user').value = config.pg_user || 'moviepilot';
+                document.getElementById('pg_password').value = config.pg_password || 'moviepilot';
+            })
+            .catch(error => {
+                console.log('加载配置失败:', error);
+            });
+        }
+
+        function getDBConfig() {
+            return {
+                pg_host: document.getElementById('pg_host').value,
+                pg_port: document.getElementById('pg_port').value,
+                pg_database: document.getElementById('pg_database').value,
+                pg_user: document.getElementById('pg_user').value,
+                pg_password: document.getElementById('pg_password').value
+            };
+        }
+
+        function testPostgreSQLConnection() {
+            const formData = new FormData();
+            const dbConfig = getDBConfig();
+            
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            document.getElementById('pgTestResult').innerHTML = 
+                '<div class="test-result alert alert-info">测试连接中...</div>';
+            
+            fetch('/test-postgresql', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pgTestResult').innerHTML = 
+                        `<div class="test-result test-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>${data.message}
+                            <div class="mt-1"><small>版本: ${data.version}</small></div>
+                        </div>`;
+                } else {
+                    document.getElementById('pgTestResult').innerHTML = 
+                        `<div class="test-result test-error">
+                            <i class="bi bi-x-circle-fill me-2"></i>${data.error}
+                        </div>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('pgTestResult').innerHTML = 
+                    `<div class="test-result test-error">
+                        <i class="bi bi-x-circle-fill me-2"></i>测试失败: ${error}
+                    </div>`;
+            });
+        }
+
+        function validateSQLiteFile() {
+            const sqliteFile = document.getElementById('sqlite_file').files[0];
+            
+            if (!sqliteFile) {
+                showAlert('sqliteValidationResult', 'warning', '请选择SQLite文件');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('sqlite_file', sqliteFile);
+            
+            document.getElementById('sqliteValidationResult').innerHTML = 
+                '<div class="test-result alert alert-info">验证文件中...</div>';
+            
+            fetch('/validate-sqlite', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let tableInfo = '';
+                    if (data.tables && data.tables.length > 0) {
+                        tableInfo = `<div class="mt-2"><small>表数量: ${data.table_count}</small></div>
+                                    <div class="mt-1"><small>表名: ${data.tables.join(', ')}</small></div>`;
+                    }
+                    document.getElementById('sqliteValidationResult').innerHTML = 
+                        `<div class="test-result test-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>${data.message}
+                            ${tableInfo}
+                        </div>`;
+                } else {
+                    document.getElementById('sqliteValidationResult').innerHTML = 
+                        `<div class="test-result test-error">
+                            <i class="bi bi-x-circle-fill me-2"></i>${data.error}
+                        </div>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('sqliteValidationResult').innerHTML = 
+                    `<div class="test-result test-error">
+                        <i class="bi bi-x-circle-fill me-2"></i>验证失败: ${error}
+                    </div>`;
+            });
+        }
+
+        function migrateDatabase() {
+            const formData = new FormData();
+            const sqliteFile = document.getElementById('sqlite_file').files[0];
+            
+            if (!sqliteFile) {
+                showAlert('migrationResult', 'warning', '请选择SQLite文件');
+                return;
+            }
+            
+            formData.append('sqlite_file', sqliteFile);
+            
+            // 添加数据库配置
+            const dbConfig = getDBConfig();
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            showAlert('migrationResult', 'info', '正在迁移数据库，请稍候...');
+            
+            fetch('/migrate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('migrationResult', 'success', data.message);
+                } else {
+                    showAlert('migrationResult', 'danger', '错误: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showAlert('migrationResult', 'danger', '请求失败: ' + error);
+            });
+        }
+
+        function migrateServerDatabase() {
+            const serverFilePath = document.getElementById('server_sqlite_file').value;
+            
+            if (!serverFilePath) {
+                showAlert('migrationResult', 'warning', '请输入服务器上SQLite文件的路径');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('server_file_path', serverFilePath);
+            
+            // 添加数据库配置
+            const dbConfig = getDBConfig();
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            showAlert('migrationResult', 'info', '正在迁移服务器上的数据库，请稍候...');
+            
+            fetch('/migrate-server', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('migrationResult', 'success', data.message);
+                } else {
+                    showAlert('migrationResult', 'danger', '错误: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showAlert('migrationResult', 'danger', '请求失败: ' + error);
+            });
+        }
+
+        function backupDatabase() {
+            const formData = new FormData();
+            
+            // 添加数据库配置
+            const dbConfig = getDBConfig();
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            showAlert('backupResult', 'info', '正在备份数据库，请稍候...');
+            
+            fetch('/backup', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data.error) {
+                    showAlert('backupResult', 'danger', '错误: ' + data.error);
+                } else {
+                    // 创建下载链接
+                    const url = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'backup_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.sql';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    showAlert('backupResult', 'success', '备份完成并开始下载');
+                }
+            })
+            .catch(error => {
+                showAlert('backupResult', 'danger', '请求失败: ' + error);
+            });
+        }
+
+        function restoreDatabase() {
+            const formData = new FormData();
+            const backupFile = document.getElementById('backup_file').files[0];
+            
+            if (!backupFile) {
+                showAlert('restoreResult', 'warning', '请选择备份文件');
+                return;
+            }
+            
+            formData.append('backup_file', backupFile);
+            
+            // 添加数据库配置
+            const dbConfig = getDBConfig();
+            for (let key in dbConfig) {
+                formData.append(key, dbConfig[key]);
+            }
+            
+            showAlert('restoreResult', 'info', '正在恢复数据库，请稍候...');
+            
+            fetch('/restore', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('restoreResult', 'success', data.message);
+                } else {
+                    showAlert('restoreResult', 'danger', '错误: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showAlert('restoreResult', 'danger', '请求失败: ' + error);
+            });
+        }
+
+        function showAlert(elementId, type, message) {
+            const alertClass = {
+                'success': 'alert-success',
+                'danger': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            };
+            
+            document.getElementById(elementId).innerHTML = 
+                `<div class="alert ${alertClass[type]} result-alert alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        }
+    </script>
+</body>
+</html>
