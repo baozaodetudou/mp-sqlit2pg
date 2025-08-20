@@ -21,7 +21,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    platform: linux/amd64
 
   postgres:
     image: postgres:17.5

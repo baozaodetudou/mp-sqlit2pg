@@ -23,7 +23,7 @@ fi
 echo "请选择操作:"
 echo "1) 构建Docker镜像 (x86_64)"
 echo "2) 构建Docker镜像 (ARM64)"
-echo "3) 构建Docker镜像 (交叉编译)"
+echo "3) 构建Docker镜像 (交叉编译/多平台)"
 echo "4) 启动服务 (仅应用)"
 echo "5) 启动服务 (应用 + PostgreSQL)"
 echo "6) 停止服务"

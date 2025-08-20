@@ -5,7 +5,6 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-      platform: linux/arm64
     image: baozaodetudou/sqlite-to-postgres
     ports:
       - "5055:5055"

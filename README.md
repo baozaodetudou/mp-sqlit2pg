@@ -50,7 +50,10 @@ uvicorn app:app --host 0.0.0.0 --port 5055
 
 ### 使用Docker运行：
 ```bash
-# 构建并运行Docker镜像
+# 直接运行预构建的多平台镜像（推荐）
+docker run -d -p 5055:5055 --name sqlite-to-postgre baozaodetudou/sqlite-to-postgres
+
+# 或者构建并运行Docker镜像
 docker build -t sqlite-to-postgres .
 docker run -p 5055:5055 sqlite-to-postgres
 
@@ -70,9 +73,20 @@ Docker镜像已优化以支持PostgreSQL 17.5及以下版本，并包含所有�
 
 使用docker-compose可以同时部署应用和PostgreSQL数据库。
 
+### 多平台支持
+
+最新版本的Docker镜像支持多平台架构，包括linux/amd64和linux/arm64：
+```bash
+# 直接运行最新版本（自动选择适合的平台）
+docker run -d -p 5055:5055 --name sqlite-to-postgre baozaodetudou/sqlite-to-postgres
+
+# 或者使用docker-compose（推荐）
+docker-compose up -d
+```
+
 ### ARM平台支持
 
-应用支持ARM平台部署：
+对于专门的ARM平台部署，也可以使用以下方式：
 ```bash
 # 构建ARM64镜像
 docker build --platform linux/arm64 -t sqlite-to-postgres:arm64 .
